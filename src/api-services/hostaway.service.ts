@@ -5,7 +5,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const HostAwayService = createApi({
   reducerPath: "hostaway",
   baseQuery: fetchBaseQuery({
-    baseUrl: `http://localhost:3000/api/v1/hostaway`,
+    baseUrl: `https://flex-living-server-production.up.railway.app/api/v1/hostaway`,
   }),
   tagTypes: ['reviews'],
   endpoints: (build) => {
