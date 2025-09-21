@@ -1,115 +1,140 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useGetReviewsQuery } from "@/api-services/hostaway.service";
+import Chart from "@/components/properties/Chart";
+import PropertyFilter, {
+  filterByOptions,
+} from "@/components/properties/PropertyFilter";
+import PropertyItemContainer from "@/components/properties/PropertyItemContainer";
+import PropertySort from "@/components/properties/PropertySort";
+import AppLayout from "@/layout/AppLayout";
+import { generateUUID } from "@/lib/utils";
+import { AppliedFilterModel, FilterLabels } from "@/models/FilterModel";
+import { NextPage } from "next";
+import React, { useEffect, useState } from "react";
+import useFilteredReviews from "@/hooks/useFilteredReviews";
+import { AppliedSortModel } from "@/models/SortModel";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const Home: NextPage = () => {
+  const { data, isLoading } = useGetReviewsQuery("");
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  const [appliedFilter, setAppliedFilters] = useState<AppliedFilterModel[]>([]);
+  const [appliedSort, setAppliedSort] = useState<AppliedSortModel[]>([]);
 
-export default function Home() {
-  return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const { reviews } = useFilteredReviews(
+    data || [],
+    appliedFilter,
+    appliedSort
   );
-}
+
+  const [availableFilterLabels, setAvailableFilterLabels] = useState<
+    FilterLabels[]
+  >([]);
+  const [availableSorts, setAvailableSorts] = useState<FilterLabels[]>([]);
+
+  useEffect(() => {
+    const filtersAdded = appliedFilter.map((filter) => filter.label);
+    const availableFilters = filterByOptions.filter(
+      (f) => !filtersAdded.includes(f)
+    );
+    setAvailableFilterLabels(availableFilters);
+  }, [JSON.stringify(appliedFilter)]);
+
+  useEffect(() => {
+    const addedSorts = appliedSort.map((sort) => sort.label);
+    const availableSorts = filterByOptions.filter(
+      (opt) => !addedSorts.includes(opt)
+    );
+    setAvailableSorts(availableSorts);
+  }, [JSON.stringify(appliedSort)]);
+
+  return (
+    <AppLayout>
+      {reviews && (
+        <div className="mt-10">
+          {data && (
+            <Chart reviewData={reviews}>
+              <PropertyFilter
+                reviews={reviews}
+                availableFilterLabels={availableFilterLabels}
+                appliedFilters={appliedFilter}
+                handleChangeSelectedOption={(filter) => {
+                  setAppliedFilters((currentFilters) => {
+                    return currentFilters.map((cf) => {
+                      if (cf.id === filter.id) {
+                        return filter;
+                      }
+                      return cf;
+                    });
+                  });
+                }}
+                addFilter={() => {
+                  setAppliedFilters((filters) => {
+                    return [
+                      ...filters,
+                      {
+                        id: generateUUID(),
+                        label: availableFilterLabels[0],
+                        operator: "equals",
+                        selectedValues: [null],
+                      },
+                    ];
+                  });
+                }}
+                clearAll={() => {
+                  setAppliedFilters(() => {
+                    return [];
+                  });
+                }}
+                handleDeleteFilter={(id) => {
+                  setAppliedFilters((filters) => {
+                    return filters.filter((f) => {
+                      return f.id !== id;
+                    });
+                  });
+                }}
+              />
+              <PropertySort
+                addSort={() => {
+                  setAppliedSort((sorts) => {
+                    return [
+                      ...sorts,
+                      {
+                        direction: "asc",
+                        id: generateUUID(),
+                        label: availableSorts[0],
+                      },
+                    ];
+                  });
+                }}
+                appliedSort={appliedSort}
+                availableSortLabels={availableSorts}
+                clearAll={() => {
+                  setAppliedSort([]);
+                }}
+                deleteSort={(id) => {
+                  setAppliedSort((sorts) => {
+                    return sorts.filter((sort) => {
+                      return sort.id !== id;
+                    });
+                  });
+                }}
+                handleChangeSort={(sort) => {
+                  setAppliedSort((sorts) => {
+                    return sorts.map((s) => {
+                      if (sort.id === s.id) {
+                        return sort;
+                      }
+                      return s;
+                    });
+                  });
+                }}
+              />
+            </Chart>
+          )}
+        </div>
+      )}
+      <PropertyItemContainer isLoading={isLoading} reviews={reviews} />
+    </AppLayout>
+  );
+};
+
+export default Home;
